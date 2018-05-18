@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # file: script.py
 #
+#
+# Usage: python script.py -h
+#
 # Dependencies:
 #     external tool pdftotext and the 'subprocess' module
 #     'os' module : tree walker
@@ -156,8 +159,8 @@ class rwDir(argparse.Action):
 
 def parseCmdArgs():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", help="Input root directory where " + \
-                        "the PDF files are.", action=rwDir, required=True)
+    parser.add_argument("-i", "--input", help="Input root directory of " + \
+                        "the input PDF files.", action=rwDir, required=True)
     return parser.parse_args()
 
 if __name__ == "__main__":
