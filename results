@@ -1,0 +1,7 @@
+(15:21:36) stojanjakotic@xmpp.is/943073e4-8773-4b1f-a015-c9b8136338fe: {0: 354, 1: 684, 4: 50, 2: 338, 3: 52, 5: 2}
+(15:22:03) stojanjakotic@xmpp.is/943073e4-8773-4b1f-a015-c9b8136338fe: Toto je hrubý výsledek čitelnosti a jednoznačnosti těch PDF.
+(15:23:23) stojanjakotic@xmpp.is/943073e4-8773-4b1f-a015-c9b8136338fe: Čili 684 / 1480, což je zhruba 46%.
+(15:23:26) stojanjakotic@xmpp.is/943073e4-8773-4b1f-a015-c9b8136338fe: To není moc.
+(15:26:21) stojanjakotic@xmpp.is/943073e4-8773-4b1f-a015-c9b8136338fe: A na Python to běží celkem rychle, asi něco přes minutu.
+(15:26:33) stojanjakotic@xmpp.is/943073e4-8773-4b1f-a015-c9b8136338fe: Na těch necelých 1500 vstupech.
+(15:37:33) stojanjakotic@xmpp.is/943073e4-8773-4b1f-a015-c9b8136338fe: Pomocí mého algoritmu jsem našel pouze 460 vstupů, které lze zpracovat. Čili 31%. Au.
