@@ -4,6 +4,8 @@
 #
 # Usage: python script.py -h
 #
+# Please note that this script is only compatible with Python version 3
+#
 # Dependencies:
 #     external tool pdftotext and the 'subprocess' module
 #     'os' module : tree walker
@@ -94,7 +96,7 @@ def walkTree(rootDir, executors, districts):
             for l in text:
                 doctypeSearch = re.search("(" + DOC_TYPES_REGEX + ")", l)
                 if(doctypeSearch is not None) and \
-                  ("Oznámenie musí byť doložené" not in l) and not doctype:
+                  (u"Oznámenie musí byť doložené" not in l) and not doctype:
                     doctype = DOC_TYPES[doctypeSearch.group(1)]
                 courtSearch = re.search("\:OS(\w\w\d*)\:", l)
                 if(courtSearch is not None) and not issuer:
@@ -128,7 +130,7 @@ def walkTree(rootDir, executors, districts):
                     mark = (erSearch.group(1) + appendix).replace("/", "-")
                 if (bool(reduce((lambda x,y : x and len(y)), [doctype, issuer, mark]))):
                     okEntries += 1
-                    newName = "_".join([doctype, issuer, mark]) + ".pdf"
+                    newName = u"_".join([doctype, issuer, mark]) + ".pdf"
                     newFullName = os.path.join(dirPath, newName)
                     print(yellowC("Renaming " + fname + " to -> " + newName))
                     os.replace(fullName, newFullName)
