@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # file: script.py
 #
 #
 # Usage: python script.py -h
 #
-# Please note that this script is only compatible with Python version 3
+# Please note that this script is only compatible with the Python version 3.
 #
 # Dependencies:
 #     external tool pdftotext and the 'subprocess' module
@@ -17,13 +17,16 @@
 from subprocess import check_output
 from subprocess import CalledProcessError
 from functools import reduce
+
 import os
 import argparse
 import time
+import sys
 import re
+import configparser
 
-DOC_TYPES = { 
-    "UZNESENIE" : "uznesenie", 
+DOC_TYPES = {
+    "UZNESENIE" : "uznesenie",
     "Žiadosť" : "ziadost",
     "Upovedomenie" : "upovedomenie",
     "EXEKUČNÝ PRÍKAZ" : "ep",
@@ -35,8 +38,8 @@ DOC_TYPES = {
 
 DOC_TYPES_REGEX = "|".join(DOC_TYPES.keys())
 
-# The file contains names of all executors in Slovakia (surname first) 
-# There can also be a row which is only the same name in a different 
+# The file contains names of all executors in Slovakia (surname first)
+# There can also be a row which is only the same name in a different
 # (grammar) case. In this situation, the row also contains an offset to the
 # nominative, i.e.
 #
@@ -45,8 +48,8 @@ DOC_TYPES_REGEX = "|".join(DOC_TYPES.keys())
 # Hojdovej Soni,1
 # Hojdovú Soňu,2
 #
-def executors(fname="executors.txt"):
-    with open(fname) as f:
+def executors(filename):
+    with open(filename) as f:
         content = [x.strip().split(",") for x in f.readlines()]
     for arr in content:
         if len(arr) == 1:
@@ -55,9 +58,9 @@ def executors(fname="executors.txt"):
             arr[1] = int(arr[1])
     return content
 
-# Returns an array of arrays of "EČV" plate ids 
-# (there can be more than one "EČV" for one district)
-def districts(fname="districts.csv"):
+# Returns an array of arrays of "EČV" plate ids
+# Caveat: there can be more than one "EČV" for one district.
+def districts(fname):
     districtAbbrColOrder = 2
     mainDelimiter = ","
     subDelimiter = ";"
@@ -65,7 +68,7 @@ def districts(fname="districts.csv"):
     with open(fname) as f:
         content = [ l.split(mainDelimiter)[districtAbbrColOrder].split(subDelimiter) \
                     for l in f.readlines()]
-    return content 
+    return content
 
 # Colored output in Python simplified
 redC    = lambda x : ("\033[91m {}\033[00m" .format(x))
@@ -85,12 +88,12 @@ def walkTree(rootDir, executors, districts):
             fullName = os.path.join(dirPath, fname)
             text = ""
             try:
-                text = [l.decode("utf-8") for l in check_output(["pdftotext", 
+                text = [l.decode("utf-8") for l in check_output(["pdftotext",
                         fullName, "-"]).split(b'\x0A')]
             except CalledProcessError:
                 print(redC("FATAL: could not read the file '%s'." % fname))
                 continue
-            doctype="" 
+            doctype=""
             issuer="" # Either a court or an executor
             mark="" # Either Ex or Er
             for l in text:
@@ -101,7 +104,7 @@ def walkTree(rootDir, executors, districts):
                 courtSearch = re.search("\:OS(\w\w\d*)\:", l)
                 if(courtSearch is not None) and not issuer:
                     # This search is quite intensive and most of the documents
-                    # contain this mark at the very beginning of the file, 
+                    # contain this mark at the very beginning of the file,
                     # we should therefore skip searching for others.
                     for districtArr in districts:
                         if courtSearch.group(1) in districtArr:
@@ -165,12 +168,47 @@ def parseCmdArgs():
                         "the input PDF files.", action=rwDir, required=True)
     return parser.parse_args()
 
+
+# Helper function which takes a string containing a filename (without ANY path)
+# and prepends the absolute path from which the script is being executed.
+# Useful when the script needs to take sources from the same directory it is
+# being executed from.
+def absolutePath(filename):
+    prefix = os.path.dirname(os.path.abspath(sys.argv[0]))
+    return os.path.join(prefix, filename)
+
+def checkLocalFileExists(filename):
+    return os.path.isfile(absolutePath(filename))
+
+def allSourcesAvailable(config):
+    return bool(reduce((lambda x, y : x and checkLocalFileExists(config["sources"][y])), \
+                config["sources"]))
+
+def loadConfig():
+    conf = configparser.ConfigParser()
+    succ = conf.read(absolutePath("config.ini"))
+    # https://docs.python.org/3.5/library/configparser.html#configparser.ConfigParser.read
+    if len(succ) != 1:
+        sys.stderr.write("Could not read the configuration file.\n" + \
+                         "Please make sure that the directory from which the " + \
+                         "script is run also contains a 'config.ini' file.\n")
+    return conf
+
+# The function takes a configparser.ConfigParser object (which acts as a map)
+# and examines whether it is safe to run the script.
+def sanityCheck(conf):
+    if not allSourcesAvailable(conf):
+        sys.stderr.write("Sanity check failed. Aborting execution of the script.\n")
+        sys.exit()
+
 if __name__ == "__main__":
-    #try:
+    conf = loadConfig()
+    sanityCheck(conf)
     args = parseCmdArgs()
     rootDir = args.input
     start = time.time()
-    walkTree(rootDir, executors(), districts())
+    sources = conf["sources"]
+    execPath = absolutePath(sources["executors"])
+    districtPath = absolutePath(sources["districts"])
+    walkTree(rootDir, executors(execPath), districts(districtPath))
     print(greenC("Finished: " + str(time.time() - start) + " s"))
-    #except Exception as e:
-    #print(redC(e))
